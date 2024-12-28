@@ -91,7 +91,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     """Fonction principale"""
     
-    keep_alive()
+    #keep_alive()
     # Créer l'application
     application = Application.builder().token(TELEGRAM_TOKEN).build()
     
