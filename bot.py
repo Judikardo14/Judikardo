@@ -1,4 +1,6 @@
 import os
+from flask import Flask
+from threading import Thread
 # Correction des importations pour python-telegram-bot
 from telegram.ext import Application, MessageHandler, CommandHandler, ContextTypes, filters
 from telegram._update import Update
@@ -11,6 +13,19 @@ import google.generativeai as genai
 TELEGRAM_TOKEN =  "7939560231:AAFLiELtAiCucV6hP0n8uwUsQ6Opdwnvrhk"
 GOOGLE_API_KEY = "AIzaSyDzDzivynuJ5vS8fyIYn7MW7mFXhzAVGX8"
 
+#Initialisation de flask
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Hello. I am alive"
+
+def run():
+    app.run(host='0.0.0.0',port=8080)
+    
+def keep_alive():
+    t = Thread(target=run) 
+    t.start()   
 
 # Configuration de Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -19,7 +34,7 @@ model = genai.GenerativeModel('gemini-pro')
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gestionnaire de la commande /start"""
     welcome_message = """
-    👋 Bonjour! Je suis un bot alimenté par Gemini.
+    👋 Bonjour! Je suis un bot alimenté par Gemini et développé par Judikardo.
     Vous pouvez me poser des questions ou discuter avec moi sur n'importe quel sujet.
     Je ferai de mon mieux pour vous aider!
     """
@@ -75,6 +90,8 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Fonction principale"""
+    
+    keep_alive()
     # Créer l'application
     application = Application.builder().token(TELEGRAM_TOKEN).build()
     
