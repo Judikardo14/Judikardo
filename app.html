@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compta 2.0 - Gestion Comptable</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+    // Initialisez EmailJS avec votre User ID
+    emailjs.init("6f1xzLMwaR6aQqO4ZFYEn");
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6A4C93;
+            --secondary: #1982C4;
+            --accent: #FF595E;
+            --success: #8AC926;
+            --light: #F5F5F7;
+            --dark: #2D2D2F;
+            --text: #333333;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=2100&q=80') no-repeat center center fixed;
+            background-size: cover;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.92);
+            z-index: -1;
+        }
+
+        .app-container {
+            display: flex;
+            flex-grow: 1;
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .animate-slideIn {
+            animation: slideIn 0.4s ease-out;
+        }
+
+        /* Footer */
+        .app-footer {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .developer-info {
+            margin-bottom: 15px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 20px;
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        /* Login Form */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(106, 76, 147, 0.9) 0%, rgba(25, 130, 196, 0.9) 100%);
+        }
+
+        .login-form {
+            background: white;
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 450px;
+            margin: 20px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary);
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, rgba(106, 76, 147, 0.95) 0%, rgba(85, 60, 122, 0.95) 100%);
+            color: white;
+            padding: 30px 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 0 15px;
+        }
+
+        .logo i {
+            font-size: 28px;
+            margin-right: 12px;
+            color: var(--accent);
+        }
+
+        .logo h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .menu {
+            list-style: none;
+            margin: 20px 0;
+            flex-grow: 1;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            margin: 8px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+        }
+
+        .menu-item i {
+            font-size: 20px;
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: var(--dark);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-profile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: var(--transition);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-card i {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .chart-container {
+            grid-column: span 2;
+            height: 300px;
+            position: relative;
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .data-table th, .data-table td {
+            padding: 18px 25px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .data-table th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr {
+            transition: var(--transition);
+        }
+
+        .data-table tr:hover {
+            background-color: #f9f9f9;
+            transform: scale(1.01);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #553c7a;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #79b421;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e44d5c;
+            transform: translateY(-2px);
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eaeaea;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(106, 76, 147, 0.1);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        /* User Menu */
+        .user-menu {
+            position: absolute;
+            top: 70px;
+            right: 30px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 15px;
+            width: 250px;
+            z-index: 100;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .user-menu-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .user-menu-item:hover {
+            background: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        .user-menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Report Section */
+        .report-section {
+            margin-bottom: 30px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            background: white;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--accent);
+        }
+
+        .notification i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .notification.success i {
+            color: var(--success);
+        }
+
+        .notification.error i {
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 20px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Initialisation de Supabase (À REMPLACER avec vos informations)
+        const supabaseUrl = 'https://unsgvwqczextcosztbsc.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuc2d2d3FjemV4dGNvc3p0YnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMTU3NjAsImV4cCI6MjA3MjY5MTc2MH0.WS0sTZgD2zz3tX8bLW0Uh7JtCUkwrcsV9AgM3EvVlAE';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Composant de notification
+        function Notification({ message, type, onClose }) {
+            React.useEffect(() => {
+                const timer = setTimeout(() => {
+                    onClose();
+                }, 3000);
+                
+                return () => clearTimeout(timer);
+            }, [onClose]);
+            
+            return (
+                <div className={`notification ${type}`}>
+                    <i className={`fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
+                    <span>{message}</span>
+                </div>
+            );
+        }
+
+        // Fonctions pour interagir avec Supabase
+        const db = {
+            // Fonctions pour les utilisateurs
+            getUsers: async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('*');
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    console.error('Erreur lors de la récupération des utilisateurs:', error);
+                    return [];
+                }
+            },
+            
+            // Fonctions pour les ventes
+            getSales: async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('sales')
+                        .select('*')
+                        .order('date', { ascending: false });
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    console.error('Erreur lors de la récupération des ventes:', error);
+                    return [];
+                }
+            },
+            
+            addSale: async (sale) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('sales')
+                        .insert([sale])
+                        .select();
+                    if (error) throw error;
+                    return data[0];
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout de la vente:', error);
+                    throw error;
+                }
+            },
+            
+            updateSale: async (id, updates) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('sales')
+                        .update(updates)
+                        .eq('id', id)
+                        .select();
+                    if (error) throw error;
+                    return data[0];
+                } catch (error) {
+                    console.error('Erreur lors de la modification de la vente:', error);
+                    throw error;
+                }
+            },
+            
+            deleteSale: async (id) => {
+                try {
+                    const { error } = await supabase
+                        .from('sales')
+                        .delete()
+                        .eq('id', id);
+                    if (error) throw error;
+                    return true;
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de la vente:', error);
+                    throw error;
+                }
+            },
+            
+            // Fonctions pour les dépenses
+            getExpenses: async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('expenses')
+                        .select('*')
+                        .order('date', { ascending: false });
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    console.error('Erreur lors de la récupération des dépenses:', error);
+                    return [];
+                }
+            },
+            
+            addExpense: async (expense) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('expenses')
+                        .insert([expense])
+                        .select();
+                    if (error) throw error;
+                    return data[0];
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout de la dépense:', error);
+                    throw error;
+                }
+            },
+            
+            updateExpense: async (id, updates) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('expenses')
+                        .update(updates)
+                        .eq('id', id)
+                        .select();
+                    if (error) throw error;
+                    return data[0];
+                } catch (error) {
+                    console.error('Erreur lors de la modification de la dépense:', error);
+                    throw error;
+                }
+            },
+            
+            deleteExpense: async (id) => {
+                try {
+                    const { error } = await supabase
+                        .from('expenses')
+                        .delete()
+                        .eq('id', id);
+                    if (error) throw error;
+                    return true;
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de la dépense:', error);
+                    throw error;
+                }
+            },
+            
+            // Fonctions pour les demandes de mot de passe
+            getPasswordRequests: async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('password_requests')
+                        .select('*');
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    console.error('Erreur lors de la récupération des demandes:', error);
+                    return [];
+                }
+            },
+            
+            addPasswordRequest: async (request) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('password_requests')
+                        .insert([request])
+                        .select();
+                    if (error) throw error;
+                    return data[0];
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout de la demande:', error);
+                    throw error;
+                }
+            },
+            
+            // Fonction pour mettre à jour un utilisateur
+            updateUser: async (id, updates) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .update(updates)
+                        .eq('id', id)
+                        .select();
+                    if (error) throw error;
+                    return data[0];
+                } catch (error) {
+                    console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+                    throw error;
+                }
+            },
+            
+            // Fonction pour récupérer le mot de passe d'un utilisateur
+            getUserPassword: async (username) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('password')
+                        .eq('username', username)
+                        .single();
+                    if (error) throw error;
+                    return data.password;
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du mot de passe:', error);
+                    throw error;
+                }
+            },
+            
+            // Fonction pour récupérer l'admin
+            getAdmin: async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('role', 'admin')
+                        .single();
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    console.error('Erreur lors de la récupération de l\'admin:', error);
+                    return null;
+                }
+            }
+        };
+
+        // Composant principal de l'application
+        function App() {
+            const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [sales, setSales] = React.useState([]);
+            const [expenses, setExpenses] = React.useState([]);
+            const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+            const [currentUser, setCurrentUser] = React.useState(null);
+            const [showUserMenu, setShowUserMenu] = React.useState(false);
+            const [showLogin, setShowLogin] = React.useState(true);
+            const [showChangePassword, setShowChangePassword] = React.useState(false);
+            const [showChangeUser, setShowChangeUser] = React.useState(false);
+            const [showForgotPassword, setShowForgotPassword] = React.useState(false);
+            const [loading, setLoading] = React.useState(false);
+            const [notification, setNotification] = React.useState(null);
+
+            const showNotification = (message, type = 'success') => {
+                setNotification({ message, type });
+            };
+
+            // Charger les données au démarrage
+            React.useEffect(() => {
+                const loadData = async () => {
+                    if (isLoggedIn) {
+                        setLoading(true);
+                        try {
+                            const salesData = await db.getSales();
+                            const expensesData = await db.getExpenses();
+                            setSales(salesData || []);
+                            setExpenses(expensesData || []);
+                        } catch (error) {
+                            console.error('Erreur lors du chargement des données:', error);
+                            showNotification('Erreur lors du chargement des données', 'error');
+                        } finally {
+                            setLoading(false);
+                        }
+                    }
+                };
+                loadData();
+            }, [isLoggedIn]);
+
+            // Fonction de connexion
+            const handleLogin = async (username, password) => {
+                setLoading(true);
+                try {
+                    const users = await db.getUsers();
+                    const user = users.find(u => u.username === username && u.password === password);
+                    
+                    if (user) {
+                        setIsLoggedIn(true);
+                        setCurrentUser(user);
+                        setShowLogin(false);
+                        
+                        // Charger les données après la connexion
+                        const salesData = await db.getSales();
+                        const expensesData = await db.getExpenses();
+                        setSales(salesData || []);
+                        setExpenses(expensesData || []);
+                        showNotification('Connexion réussie!');
+                        return true;
+                    } else {
+                        showNotification('Nom d\'utilisateur ou mot de passe incorrect', 'error');
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Erreur de connexion:', error);
+                    showNotification('Erreur de connexion', 'error');
+                    return false;
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            // Fonction de déconnexion
+            const handleLogout = () => {
+                setIsLoggedIn(false);
+                setCurrentUser(null);
+                setShowLogin(true);
+                setShowUserMenu(false);
+                showNotification('Déconnexion réussie');
+            };
+
+            // Fonction de changement de mot de passe
+            const handleChangePassword = async (currentPassword, newPassword) => {
+                try {
+                    if (currentUser.password === currentPassword) {
+                        const updatedUser = await db.updateUser(currentUser.id, { password: newPassword });
+                        if (updatedUser) {
+                            setCurrentUser(updatedUser);
+                            showNotification('Mot de passe changé avec succès!');
+                            setShowChangePassword(false);
+                            return true;
+                        }
+                    } else {
+                        showNotification('Mot de passe actuel incorrect', 'error');
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du changement de mot de passe:', error);
+                    showNotification('Erreur lors du changement de mot de passe', 'error');
+                    return false;
+                }
+            };
+
+            // Fonction de demande de réinitialisation de mot de passe
+                                    
+            const handleForgotPassword = async (username) => {
+                try {
+                    const users = await db.getUsers();
+                    const user = users.find(u => u.username === username);
+                    
+                    if (!user) {
+                        showNotification('Nom d\'utilisateur non trouvé', 'error');
+                        return false;
+                    }
+
+                    // Envoyer l'email avec EmailJS
+                    const templateParams = {
+                        name: user.name,
+                        username: user.username,
+                        password: user.password,
+                        to_email: user.email
+                    };
+
+                    try {
+                        const response = await emailjs.send(
+                            'service_wsnreie',     // Remplacez par votre Service ID
+                            'template_ndg7nmw',    // Remplacez par votre Template ID
+                            templateParams
+                        );
+
+                        console.log('Email envoyé avec succès:', response);
+                        
+                        // Enregistrer la demande
+                        await db.addPasswordRequest({
+                            user_id: user.id,
+                            username: user.username,
+                            name: user.name,
+                            status: 'email_sent',
+                            email_sent_to: user.email
+                        });
+                        
+                        showNotification(`Email envoyé à ${user.email} avec votre mot de passe`);
+                        setShowForgotPassword(false);
+                        return true;
+                        
+                    } catch (emailError) {
+                        console.error('Erreur EmailJS:', emailError);
+                        
+                        // Fallback: ouvrir le client email
+                        const subject = 'Votre mot de passe Compta 2.0';
+                        const body = `Bonjour ${user.name},\n\nVotre mot de passe pour Compta 2.0 est: ${user.password}\n\nCordialement,\nL'équipe Compta 2.0`;
+                        const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                        window.open(mailtoLink, '_blank');
+                        
+                        showNotification(`Ouvrez votre client email pour voir votre mot de passe`);
+                        setShowForgotPassword(false);
+                        return true;
+                    }
+
+                } catch (error) {
+                    console.error('Erreur générale:', error);
+                    showNotification('Erreur lors de la récupération du mot de passe', 'error');
+                    return false;
+                }
+            };
+            // Fonction de changement d'utilisateur
+            const handleChangeUser = () => {
+                setShowChangeUser(true);
+                setShowUserMenu(false);
+            };
+
+            // Fonction pour ajouter une vente
+            const addSale = async (sale) => {
+                try {
+                    const newSale = await db.addSale(sale);
+                    if (newSale) {
+                        setSales(prevSales => [newSale, ...prevSales]);
+                        showNotification('Vente ajoutée avec succès!');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout de la vente:', error);
+                    showNotification('Erreur lors de l\'ajout de la vente', 'error');
+                }
+            };
+
+            // Fonction pour modifier une vente
+            const updateSale = async (id, updates) => {
+                try {
+                    const updatedSale = await db.updateSale(id, updates);
+                    if (updatedSale) {
+                        setSales(prevSales => prevSales.map(sale => sale.id === id ? updatedSale : sale));
+                        showNotification('Vente modifiée avec succès!');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la modification de la vente:', error);
+                    showNotification('Erreur lors de la modification de la vente', 'error');
+                }
+                return false;
+            };
+
+            // Fonction pour supprimer une vente
+            const deleteSale = async (id) => {
+                try {
+                    const success = await db.deleteSale(id);
+                    if (success) {
+                        setSales(prevSales => prevSales.filter(sale => sale.id !== id));
+                        showNotification('Vente supprimée avec succès!');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de la vente:', error);
+                    showNotification('Erreur lors de la suppression de la vente', 'error');
+                }
+            };
+
+            // Fonction pour ajouter une dépense
+            const addExpense = async (expense) => {
+                try {
+                    const newExpense = await db.addExpense(expense);
+                    if (newExpense) {
+                        setExpenses(prevExpenses => [newExpense, ...prevExpenses]);
+                        showNotification('Dépense ajoutée avec succès!');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout de la dépense:', error);
+                    showNotification('Erreur lors de l\'ajout de la dépense', 'error');
+                }
+            };
+
+            // Fonction pour modifier une dépense
+            const updateExpense = async (id, updates) => {
+                try {
+                    const updatedExpense = await db.updateExpense(id, updates);
+                    if (updatedExpense) {
+                        setExpenses(prevExpenses => prevExpenses.map(expense => expense.id === id ? updatedExpense : expense));
+                        showNotification('Dépense modifiée avec succès!');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la modification de la dépense:', error);
+                    showNotification('Erreur lors de la modification de la dépense', 'error');
+                }
+                return false;
+            };
+
+            // Fonction pour supprimer une dépense
+            const deleteExpense = async (id) => {
+                try {
+                    const success = await db.deleteExpense(id);
+                    if (success) {
+                        setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== id));
+                        showNotification('Dépense supprimée avec succès!');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de la dépense:', error);
+                    showNotification('Erreur lors de la suppression de la dépense', 'error');
+                }
+            };
+
+            if (showLogin) {
+                return (
+                    <>
+                        <LoginForm 
+                            onLogin={handleLogin} 
+                            onForgotPassword={() => setShowForgotPassword(true)} 
+                            loading={loading}
+                        />
+                        {showForgotPassword && (
+                            <ForgotPasswordForm 
+                                onSubmit={handleForgotPassword} 
+                                onCancel={() => setShowForgotPassword(false)} 
+                            />
+                        )}
+                        {notification && (
+                            <Notification 
+                                message={notification.message} 
+                                type={notification.type} 
+                                onClose={() => setNotification(null)} 
+                            />
+                        )}
+                    </>
+                );
+            }
+
+            if (showChangePassword) {
+                return (
+                    <>
+                        <ChangePasswordForm onSubmit={handleChangePassword} onCancel={() => setShowChangePassword(false)} />
+                        {notification && (
+                            <Notification 
+                                message={notification.message} 
+                                type={notification.type} 
+                                onClose={() => setNotification(null)} 
+                            />
+                        )}
+                    </>
+                );
+            }
+
+            if (showChangeUser) {
+                return (
+                    <>
+                        <ChangeUserForm users={db.getUsers()} onSelectUser={(user) => {
+                            setCurrentUser(user);
+                            setShowChangeUser(false);
+                        }} onCancel={() => setShowChangeUser(false)} />
+                        {notification && (
+                            <Notification 
+                                message={notification.message} 
+                                type={notification.type} 
+                                onClose={() => setNotification(null)} 
+                            />
+                        )}
+                    </>
+                );
+            }
+
+            return (
+                <>
+                    <div className="app-container">
+                        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+                        <div className="main-content">
+                            <Header 
+                                currentUser={currentUser} 
+                                onUserClick={() => setShowUserMenu(!showUserMenu)} 
+                            />
+                            {showUserMenu && (
+                                <UserMenu 
+                                    onChangePassword={() => setShowChangePassword(true)}
+                                    onChangeUser={handleChangeUser}
+                                    onLogout={handleLogout}
+                                />
+                            )}
+                            {loading ? (
+                                <div className="loading">
+                                    <div className="loading-spinner"></div>
+                                </div>
+                            ) : (
+                                <MainContent 
+                                    activeTab={activeTab}
+                                    sales={sales}
+                                    expenses={expenses}
+                                    onAddSale={addSale}
+                                    onUpdateSale={updateSale}
+                                    onDeleteSale={deleteSale}
+                                    onAddExpense={addExpense}
+                                    onUpdateExpense={updateExpense}
+                                    onDeleteExpense={deleteExpense}
+                                />
+                            )}
+                        </div>
+                    </div>
+                    <AppFooter />
+                    {notification && (
+                        <Notification 
+                            message={notification.message} 
+                            type={notification.type} 
+                            onClose={() => setNotification(null)} 
+                        />
+                    )}
+                </>
+            );
+        }
+
+        // Composant Footer
+        function AppFooter() {
+            return (
+                <footer className="app-footer">
+                    <div className="developer-info">
+                        Développé par Judicaël Karol DOBOEVI
+                    </div>
+                    <div className="social-links">
+                        <a href="https://www.facebook.com/simple.judikardo" target="_blank" title="Facebook">
+                            <i className="fab fa-facebook"></i>
+                        </a>
+                        <a href="mailto:judikardo@gmail.com" title="Email">
+                            <i className="fas fa-envelope"></i>
+                        </a>
+                        <a href="https://twitter.com/iveobod" target="_blank" title="Twitter">
+                            <i className="fab fa-x-twitter"></i>
+                        </a>
+                    </div>
+                </footer>
+            );
+        }
+
+        // Composant LoginForm
+        function LoginForm({ onLogin, onForgotPassword, loading }) {
+            const [username, setUsername] = React.useState("");
+            const [password, setPassword] = React.useState("");
+            const [error, setError] = React.useState("");
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setError("");
+                const success = await onLogin(username, password);
+                if (!success) {
+                    setError("Nom d'utilisateur ou mot de passe incorrect");
+                }
+            };
+
+            return (
+                <div className="login-container">
+                    <form className="login-form" onSubmit={handleSubmit}>
+                        <h2>Compta 2.0</h2>
+                        {error && <div style={{color: "red", marginBottom: "15px"}}>{error}</div>}
+                        <div className="form-group">
+                            <label>Nom d'utilisateur</label>
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                value={username} 
+                                onChange={(e) => setUsername(e.target.value)} 
+                                required 
+                                disabled={loading}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Mot de passe</label>
+                            <input 
+                                type="password" 
+                                className="form-control" 
+                                value={password} 
+                                onChange={(e) => setPassword(e.target.value)} 
+                                required 
+                                disabled={loading}
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary" style={{width: "100%"}} disabled={loading}>
+                            {loading ? "Connexion..." : "Se connecter"}
+                        </button>
+                        <p style={{textAlign: "center", marginTop: "20px"}}>
+                            <a href="#" style={{color: "#6A4C93"}} onClick={(e) => { e.preventDefault(); onForgotPassword(); }}>
+                                Mot de passe oublié ?
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            );
+        }
+
+        // Composant ForgotPasswordForm
+        function ForgotPasswordForm({ onSubmit, onCancel }) {
+            const [username, setUsername] = React.useState("");
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSubmit(username);
+            };
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal">
+                        <button className="modal-close" onClick={onCancel}>
+                            <i className="fas fa-times"></i>
+                        </button>
+                        <h2>Mot de passe oublié</h2>
+                        <p style={{marginBottom: '20px'}}>Entrez votre nom d'utilisateur. Un email contenant votre mot de passe vous sera envoyé par l'équipe.</p>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Nom d'utilisateur</label>
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    value={username} 
+                                    onChange={(e) => setUsername(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                            <div style={{display: "flex", gap: "10px"}}>
+                                <button type="button" className="btn" style={{flex: 1}} onClick={onCancel}>
+                                    Annuler
+                                </button>
+                                <button type="submit" className="btn btn-primary" style={{flex: 1}}>
+                                    Envoyer la demande
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // Composant ChangePasswordForm
+        function ChangePasswordForm({ onSubmit, onCancel }) {
+            const [currentPassword, setCurrentPassword] = React.useState("");
+            const [newPassword, setNewPassword] = React.useState("");
+            const [confirmPassword, setConfirmPassword] = React.useState("");
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (newPassword !== confirmPassword) {
+                    alert("Les mots de passe ne correspondent pas");
+                    return;
+                }
+                onSubmit(currentPassword, newPassword);
+            };
+
+            return (
+                <div className="login-container">
+                    <form className="login-form" onSubmit={handleSubmit}>
+                        <h2>Changer le mot de passe</h2>
+                        <div className="form-group">
+                            <label>Mot de passe actuel</label>
+                            <input 
+                                type="password" 
+                                className="form-control" 
+                                value={currentPassword} 
+                                onChange={(e) => setCurrentPassword(e.target.value)} 
+                                required 
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Nouveau mot de passe</label>
+                            <input 
+                                type="password" 
+                                className="form-control" 
+                                value={newPassword} 
+                                onChange={(e) => setNewPassword(e.target.value)} 
+                                required 
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Confirmer le nouveau mot de passe</label>
+                            <input 
+                                type="password" 
+                                className="form-control" 
+                                value={confirmPassword} 
+                                onChange={(e) => setConfirmPassword(e.target.value)} 
+                                required 
+                            />
+                        </div>
+                        <div style={{display: "flex", gap: "10px"}}>
+                            <button type="button" className="btn" style={{flex: 1}} onClick={onCancel}>
+                                Annuler
+                            </button>
+                            <button type="submit" className="btn btn-primary" style={{flex: 1}}>
+                                Changer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            );
+        }
+
+        // Composant ChangeUserForm
+        function ChangeUserForm({ users, onSelectUser, onCancel }) {
+            const [usersList, setUsersList] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+
+            React.useEffect(() => {
+                const loadUsers = async () => {
+                    try {
+                        const usersData = await users;
+                        setUsersList(usersData || []);
+                    } catch (error) {
+                        console.error('Erreur lors du chargement des utilisateurs:', error);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+                loadUsers();
+            }, [users]);
+
+            if (loading) {
+                return (
+                    <div className="login-container">
+                        <div className="loading">
+                            <div className="loading-spinner"></div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="login-container">
+                    <div className="login-form">
+                        <h2>Changer d'utilisateur</h2>
+                        <div style={{marginBottom: "20px"}}>
+                            {usersList.map(user => (
+                                <div 
+                                    key={user.id} 
+                                    className="user-menu-item" 
+                                    onClick={() => onSelectUser(user)}
+                                    style={{display: "flex", alignItems: "center", marginBottom: "10px"}}
+                                >
+                                    <img src={user.avatar} alt={user.name} style={{width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px"}} />
+                                    <div>
+                                        <div>{user.name}</div>
+                                        <div style={{fontSize: "12px", color: "#666"}}>{user.username}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <button type="button" className="btn" style={{width: "100%"}} onClick={onCancel}>
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Composant Sidebar
+        function Sidebar({ activeTab, setActiveTab }) {
+            return (
+                <div className="sidebar">
+                    <div className="logo">
+                        <i className="fas fa-sandwich"></i>
+                        <h1>Compta 2.0</h1>
+                    </div>
+                    
+                    <ul className="menu">
+                        <li 
+                            className={`menu-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('dashboard')}
+                        >
+                            <i className="fas fa-chart-pie"></i>
+                            <span>Tableau de bord</span>
+                        </li>
+                        <li 
+                            className={`menu-item ${activeTab === 'sales' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('sales')}
+                        >
+                            <i className="fas fa-euro-sign"></i>
+                            <span>Ventes</span>
+                        </li>
+                        <li 
+                            className={`menu-item ${activeTab === 'expenses' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('expenses')}
+                        >
+                            <i className="fas fa-receipt"></i>
+                            <span>Dépenses</span>
+                        </li>
+                        <li 
+                            className={`menu-item ${activeTab === 'reports' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('reports')}
+                        >
+                            <i className="fas fa-chart-line"></i>
+                            <span>Rapports</span>
+                        </li>
+                    </ul>
+                    
+                    <div className="sidebar-footer">
+                        <div className="user-profile">
+                            <img src="https://i.pravatar.cc/150?img=44" alt="User" />
+                            <span>Lachoyana </span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Composant Header
+        function Header({ currentUser, onUserClick }) {
+            return (
+                <div className="header">
+                    <h1 className="page-title">Tableau de Bord</h1>
+                    <div className="user-profile" onClick={onUserClick}>
+                        <img src={currentUser?.avatar || "https://i.pravatar.cc/150?img=12"} alt="User" />
+                        <span>{currentUser?.name || "Utilisateur"}</span>
+                        <i className="fas fa-chevron-down" style={{marginLeft: "10px"}}></i>
+                    </div>
+                </div>
+            );
+        }
+
+        // Composant UserMenu
+        function UserMenu({ onChangePassword, onChangeUser, onLogout }) {
+            return (
+                <div className="user-menu">
+                    <div className="user-menu-item" onClick={onChangePassword}>
+                        <i className="fas fa-key"></i>
+                        <span>Changer le mot de passe</span>
+                    </div>
+                    <div className="user-menu-item" onClick={onChangeUser}>
+                        <i className="fas fa-user"></i>
+                        <span>Changer d'utilisateur</span>
+                    </div>
+                    <div className="user-menu-item" onClick={onLogout}>
+                        <i className="fas fa-sign-out-alt"></i>
+                        <span>Déconnexion</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // Composant MainContent
+        function MainContent({ activeTab, sales, expenses, onAddSale, onUpdateSale, onDeleteSale, onAddExpense, onUpdateExpense, onDeleteExpense }) {
+            switch(activeTab) {
+                case 'dashboard':
+                    return <Dashboard sales={sales} expenses={expenses} />;
+                case 'sales':
+                    return <SalesTable sales={sales} onAddSale={onAddSale} onUpdateSale={onUpdateSale} onDeleteSale={onDeleteSale} />;
+                case 'expenses':
+                    return <ExpensesTable expenses={expenses} onAddExpense={onAddExpense} onUpdateExpense={onUpdateExpense} onDeleteExpense={onDeleteExpense} />;
+                case 'reports':
+                    return <Reports sales={sales} expenses={expenses} />;
+                default:
+                    return <Dashboard sales={sales} expenses={expenses} />;
+            }
+        }
+
+        // Composant Dashboard
+        function Dashboard({ sales, expenses }) {
+            const totalSales = sales.reduce((sum, sale) => sum + sale.amount, 0);
+            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const profit = totalSales - totalExpenses;
+            
+            // Données pour le graphique
+            const salesByCategory = sales.reduce((acc, sale) => {
+                acc[sale.category] = (acc[sale.category] || 0) + sale.amount;
+                return acc;
+            }, {});
+            
+            React.useEffect(() => {
+                // Créer le graphique circulaire
+                const ctx = document.getElementById('salesChart');
+                if (ctx) {
+                    const chart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(salesByCategory),
+                            datasets: [{
+                                data: Object.values(salesByCategory),
+                                backgroundColor: [
+                                    '#6A4C93',
+                                    '#1982C4',
+                                    '#FF595E',
+                                    '#8AC926',
+                                    '#FFCA3A'
+                                ],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            },
+                            cutout: '70%'
+                        }
+                    });
+                    
+                    return () => {
+                        chart.destroy();
+                    };
+                }
+            }, [salesByCategory]);
+
+            // Formater les montants en FCFA
+            const formatFCFA = (amount) => {
+                return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+            };
+
+            return (
+                <div>
+                    <div className="dashboard-grid">
+                        <div className="card stat-card">
+                            <i className="fas fa-euro-sign"></i>
+                            <div className="stat-value">{formatFCFA(totalSales)}</div>
+                            <div className="stat-label">Chiffre d'affaires total</div>
+                        </div>
+                        
+                        <div className="card stat-card">
+                            <i className="fas fa-receipt"></i>
+                            <div className="stat-value">{formatFCFA(totalExpenses)}</div>
+                            <div className="stat-label">Dépenses totales</div>
+                        </div>
+                        
+                        <div className="card stat-card">
+                            <i className="fas fa-chart-line"></i>
+                            <div className="stat-value" style={{color: profit >= 0 ? '#8AC926' : '#FF595E'}}>
+                                {formatFCFA(profit)}
+                            </div>
+                            <div className="stat-label">Bénéfice net</div>
+                        </div>
+                        
+                        <div className="card chart-container">
+                            <h3>Ventes par catégorie</h3>
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div className="card">
+                        <h3>Ventes récentes</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Produit</th>
+                                    <th>Catégorie</th>
+                                    <th>Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {sales.slice(0, 5).map(sale => (
+                                    <tr key={sale.id}>
+                                        <td>{sale.date}</td>
+                                        <td>{sale.product}</td>
+                                        <td>{sale.category}</td>
+                                        <td>{new Intl.NumberFormat('fr-FR').format(sale.amount)} FCFA</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        // Composant SalesTable
+        function SalesTable({ sales, onAddSale, onUpdateSale, onDeleteSale }) {
+            const [showAddModal, setShowAddModal] = React.useState(false);
+            const [showEditModal, setShowEditModal] = React.useState(false);
+            const [selectedSale, setSelectedSale] = React.useState(null);
+            const [newSale, setNewSale] = React.useState({
+                date: new Date().toISOString().split('T')[0],
+                product: '',
+                category: 'Panini',
+                amount: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onAddSale({
+                    ...newSale,
+                    amount: parseInt(newSale.amount)
+                });
+                setShowAddModal(false);
+                setNewSale({
+                    date: new Date().toISOString().split('T')[0],
+                    product: '',
+                    category: 'Panini',
+                    amount: ''
+                });
+            };
+
+            const handleEdit = (sale) => {
+                setSelectedSale(sale);
+                setShowEditModal(true);
+            };
+
+            const handleEditSubmit = async (e) => {
+                e.preventDefault();
+                const success = await onUpdateSale(selectedSale.id, {
+                    date: selectedSale.date,
+                    product: selectedSale.product,
+                    category: selectedSale.category,
+                    amount: parseInt(selectedSale.amount)
+                });
+                
+                if (success) {
+                    setShowEditModal(false);
+                    setSelectedSale(null);
+                }
+            };
+
+            return (
+                <div>
+                    <div className="header">
+                        <h1 className="page-title">Gestion des Ventes</h1>
+                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                            <i className="fas fa-plus"></i>
+                            Nouvelle vente
+                        </button>
+                    </div>
+                    
+                    <div className="card">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Produit</th>
+                                    <th>Catégorie</th>
+                                    <th>Montant (FCFA)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {sales.map(sale => (
+                                    <tr key={sale.id}>
+                                        <td>{sale.date}</td>
+                                        <td>{sale.product}</td>
+                                        <td>{sale.category}</td>
+                                        <td>{new Intl.NumberFormat('fr-FR').format(sale.amount)}</td>
+                                        <td>
+                                            <button 
+                                                className="btn" 
+                                                style={{padding: '5px 10px', marginRight: '5px'}}
+                                                onClick={() => handleEdit(sale)}
+                                            >
+                                                <i className="fas fa-edit"></i>
+                                            </button>
+                                            <button 
+                                                className="btn" 
+                                                style={{padding: '5px 10px', backgroundColor: '#FF595E', color: 'white'}}
+                                                onClick={() => onDeleteSale(sale.id)}
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {showAddModal && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <button className="modal-close" onClick={() => setShowAddModal(false)}>
+                                    <i className="fas fa-times"></i>
+                                </button>
+                                <h2>Ajouter une vente</h2>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="form-group">
+                                        <label>Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="form-control" 
+                                            value={newSale.date}
+                                            onChange={(e) => setNewSale({...newSale, date: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Produit</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control" 
+                                            value={newSale.product}
+                                            onChange={(e) => setNewSale({...newSale, product: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Catégorie</label>
+                                        <select 
+                                            className="form-control"
+                                            value={newSale.category}
+                                            onChange={(e) => setNewSale({...newSale, category: e.target.value})}
+                                            required
+                                        >
+                                            <option value="Panini">Panini</option>
+                                            <option value="Dessert">Dessert</option>
+                                            <option value="Boisson">Boisson</option>
+                                            <option value="Autre">Autre</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Montant (FCFA)</label>
+                                        <input 
+                                            type="number" 
+                                            className="form-control" 
+                                            value={newSale.amount}
+                                            onChange={(e) => setNewSale({...newSale, amount: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">
+                                        Ajouter
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {showEditModal && selectedSale && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                                    <i className="fas fa-times"></i>
+                                </button>
+                                <h2>Modifier la vente</h2>
+                                <form onSubmit={handleEditSubmit}>
+                                    <div className="form-group">
+                                        <label>Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="form-control" 
+                                            value={selectedSale.date}
+                                            onChange={(e) => setSelectedSale({...selectedSale, date: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Produit</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control" 
+                                            value={selectedSale.product}
+                                            onChange={(e) => setSelectedSale({...selectedSale, product: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Catégorie</label>
+                                        <select 
+                                            className="form-control"
+                                            value={selectedSale.category}
+                                            onChange={(e) => setSelectedSale({...selectedSale, category: e.target.value})}
+                                            required
+                                        >
+                                            <option value="Panini">Panini</option>
+                                            <option value="Dessert">Dessert</option>
+                                            <option value="Boisson">Boisson</option>
+                                            <option value="Autre">Autre</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Montant (FCFA)</label>
+                                        <input 
+                                            type="number" 
+                                            className="form-control" 
+                                            value={selectedSale.amount}
+                                            onChange={(e) => setSelectedSale({...selectedSale, amount: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">
+                                        Modifier
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Composant ExpensesTable
+        function ExpensesTable({ expenses, onAddExpense, onUpdateExpense, onDeleteExpense }) {
+            const [showAddModal, setShowAddModal] = React.useState(false);
+            const [showEditModal, setShowEditModal] = React.useState(false);
+            const [selectedExpense, setSelectedExpense] = React.useState(null);
+            const [newExpense, setNewExpense] = React.useState({
+                date: new Date().toISOString().split('T')[0],
+                description: '',
+                amount: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onAddExpense({
+                    ...newExpense,
+                    amount: parseInt(newExpense.amount)
+                });
+                setShowAddModal(false);
+                setNewExpense({
+                    date: new Date().toISOString().split('T')[0],
+                    description: '',
+                    amount: ''
+                });
+            };
+
+            const handleEdit = (expense) => {
+                setSelectedExpense(expense);
+                setShowEditModal(true);
+            };
+
+            const handleEditSubmit = async (e) => {
+                e.preventDefault();
+                const success = await onUpdateExpense(selectedExpense.id, {
+                    date: selectedExpense.date,
+                    description: selectedExpense.description,
+                    amount: parseInt(selectedExpense.amount)
+                });
+                
+                if (success) {
+                    setShowEditModal(false);
+                    setSelectedExpense(null);
+                }
+            };
+
+            return (
+                <div>
+                    <div className="header">
+                        <h1 className="page-title">Gestion des Dépenses</h1>
+                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                            <i className="fas fa-plus"></i>
+                            Nouvelle dépense
+                        </button>
+                    </div>
+                    
+                    <div className="card">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Montant (FCFA)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {expenses.map(expense => (
+                                    <tr key={expense.id}>
+                                        <td>{expense.date}</td>
+                                        <td>{expense.description}</td>
+                                        <td>{new Intl.NumberFormat('fr-FR').format(expense.amount)}</td>
+                                        <td>
+                                            <button 
+                                                className="btn" 
+                                                style={{padding: '5px 10px', marginRight: '5px'}}
+                                                onClick={() => handleEdit(expense)}
+                                            >
+                                                <i className="fas fa-edit"></i>
+                                            </button>
+                                            <button 
+                                                className="btn" 
+                                                style={{padding: '5px 10px', backgroundColor: '#FF595E', color: 'white'}}
+                                                onClick={() => onDeleteExpense(expense.id)}
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {showAddModal && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <button className="modal-close" onClick={() => setShowAddModal(false)}>
+                                    <i className="fas fa-times"></i>
+                                </button>
+                                <h2>Ajouter une dépense</h2>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="form-group">
+                                        <label>Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="form-control" 
+                                            value={newExpense.date}
+                                            onChange={(e) => setNewExpense({...newExpense, date: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Description</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control" 
+                                            value={newExpense.description}
+                                            onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Montant (FCFA)</label>
+                                        <input 
+                                            type="number" 
+                                            className="form-control" 
+                                            value={newExpense.amount}
+                                            onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">
+                                        Ajouter
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {showEditModal && selectedExpense && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                                    <i className="fas fa-times"></i>
+                                </button>
+                                <h2>Modifier la dépense</h2>
+                                <form onSubmit={handleEditSubmit}>
+                                    <div className="form-group">
+                                        <label>Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="form-control" 
+                                            value={selectedExpense.date}
+                                            onChange={(e) => setSelectedExpense({...selectedExpense, date: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Description</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control" 
+                                            value={selectedExpense.description}
+                                            onChange={(e) => setSelectedExpense({...selectedExpense, description: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Montant (FCFA)</label>
+                                        <input 
+                                            type="number" 
+                                            className="form-control" 
+                                            value={newExpense.amount}
+                                            onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">
+                                        Ajouter
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {showEditModal && selectedExpense && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                                    <i className="fas fa-times"></i>
+                                </button>
+                                <h2>Modifier la dépense</h2>
+                                <form onSubmit={handleEditSubmit}>
+                                    <div className="form-group">
+                                        <label>Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="form-control" 
+                                            value={selectedExpense.date}
+                                            onChange={(e) => setSelectedExpense({...selectedExpense, date: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Description</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control" 
+                                            value={selectedExpense.description}
+                                            onChange={(e) => setSelectedExpense({...selectedExpense, description: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Montant (FCFA)</label>
+                                        <input 
+                                            type="number" 
+                                            className="form-control" 
+                                            value={selectedExpense.amount}
+                                            onChange={(e) => setSelectedExpense({...selectedExpense, amount: e.target.value})}
+                                            required 
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">
+                                        Modifier
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Composant Reports
+        function Reports({ sales, expenses }) {
+            const [showSalesReport, setShowSalesReport] = React.useState(false);
+            const [showExpensesReport, setShowExpensesReport] = React.useState(false);
+            
+            const totalSales = sales.reduce((sum, sale) => sum + sale.amount, 0);
+            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const profit = totalSales - totalExpenses;
+
+            // Formater les montants en FCFA
+            const formatFCFA = (amount) => {
+                return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+            };
+
+            // Générer le rapport PDF
+            const generatePDF = (type) => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Titre du document
+                doc.setFontSize(20);
+                doc.setTextColor(40, 40, 40);
+                doc.text(`Rapport ${type === 'sales' ? 'des Ventes' : 'des Dépenses'} - Compta 2.0`, 105, 15, { align: 'center' });
+                
+                // Date de génération
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 105, 22, { align: 'center' });
+                
+                // Données du tableau
+                const tableData = type === 'sales' 
+                    ? sales.map(item => [item.date, item.product, item.category, formatFCFA(item.amount)])
+                    : expenses.map(item => [item.date, item.description, formatFCFA(item.amount)]);
+                
+                // En-têtes du tableau
+                const tableHeaders = type === 'sales' 
+                    ? ['Date', 'Produit', 'Catégorie', 'Montant'] 
+                    : ['Date', 'Description', 'Montant'];
+                
+                // Générer le tableau
+                doc.autoTable({
+                    head: [tableHeaders],
+                    body: tableData,
+                    startY: 30,
+                    theme: 'grid',
+                    styles: { fontSize: 10, cellPadding: 3 },
+                    headStyles: { fillColor: [106, 76, 147] },
+                    margin: { top: 30 }
+                });
+                
+                // Résumé
+                const finalY = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(12);
+                doc.setTextColor(40, 40, 40);
+                doc.text(type === 'sales' 
+                    ? `Total des ventes: ${formatFCFA(totalSales)}` 
+                    : `Total des dépenses: ${formatFCFA(totalExpenses)}`, 
+                14, finalY);
+                
+                // Sauvegarder le PDF
+                doc.save(`rapport-${type === 'sales' ? 'ventes' : 'depenses'}.pdf`);
+            };
+
+            return (
+                <div>
+                    <div className="header">
+                        <h1 className="page-title">Rapports Financiers</h1>
+                        <button className="btn btn-primary" onClick={() => generatePDF('overview')}>
+                            <i className="fas fa-download"></i>
+                            Exporter PDF
+                        </button>
+                    </div>
+                    
+                    <div className="dashboard-grid">
+                        <div className="card">
+                            <div className="report-header">
+                                <h3>Rapport des ventes</h3>
+                                <button className="btn btn-primary" onClick={() => generatePDF('sales')}>
+                                    <i className="fas fa-download"></i>
+                                    Exporter
+                                </button>
+                            </div>
+                            <p>Analyse détaillée des performances de vente par catégorie et par période.</p>
+                            <button 
+                                className="btn btn-success" 
+                                style={{marginTop: '15px'}}
+                                onClick={() => setShowSalesReport(!showSalesReport)}
+                            >
+                                {showSalesReport ? 'Masquer le rapport' : 'Voir le rapport complet'}
+                            </button>
+
+                            {showSalesReport && (
+                                <div className="report-section" style={{marginTop: '20px'}}>
+                                    <h4>Détail des ventes</h4>
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Produit</th>
+                                                <th>Catégorie</th>
+                                                <th>Montant (FCFA)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {sales.map(sale => (
+                                                <tr key={sale.id}>
+                                                    <td>{sale.date}</td>
+                                                    <td>{sale.product}</td>
+                                                    <td>{sale.category}</td>
+                                                    <td>{new Intl.NumberFormat('fr-FR').format(sale.amount)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    <div style={{marginTop: '15px', fontWeight: 'bold'}}>
+                                        Total: {formatFCFA(totalSales)}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="card">
+                            <div className="report-header">
+                                <h3>Rapport des dépenses</h3>
+                                <button className="btn btn-primary" onClick={() => generatePDF('expenses')}>
+                                    <i className="fas fa-download"></i>
+                                    Exporter
+                                </button>
+                            </div>
+                            <p>Analyse détaillée des dépenses par catégorie et par période.</p>
+                            <button 
+                                className="btn btn-success" 
+                                style={{marginTop: '15px'}}
+                                onClick={() => setShowExpensesReport(!showExpensesReport)}
+                            >
+                                {showExpensesReport ? 'Masquer le rapport' : 'Voir le rapport complet'}
+                            </button>
+
+                            {showExpensesReport && (
+                                <div className="report-section" style={{marginTop: '20px'}}>
+                                    <h4>Détail des dépenses</h4>
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Description</th>
+                                                <th>Montant (FCFA)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {expenses.map(expense => (
+                                                <tr key={expense.id}>
+                                                    <td>{expense.date}</td>
+                                                    <td>{expense.description}</td>
+                                                    <td>{new Intl.NumberFormat('fr-FR').format(expense.amount)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    <div style={{marginTop: '15px', fontWeight: 'bold'}}>
+                                        Total: {formatFCFA(totalExpenses)}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <div className="card">
+                        <h3>Bilan mensuel</h3>
+                        <p>Synthèse des revenus, dépenses et bénéfices du mois en cours.</p>
+                        
+                        <div style={{display: 'flex', justifyContent: 'space-around', marginTop: '30px'}}>
+                            <div style={{textAlign: 'center'}}>
+                                <div style={{fontSize: '24px', fontWeight: 'bold', color: '#6A4C93'}}>
+                                    {formatFCFA(totalSales)}
+                                </div>
+                                <div>Revenus</div>
+                            </div>
+                            
+                            <div style={{textAlign: 'center'}}>
+                                <div style={{fontSize: '24px', fontWeight: 'bold', color: '#FF595E'}}>
+                                    {formatFCFA(totalExpenses)}
+                                </div>
+                                <div>Dépenses</div>
+                            </div>
+                            
+                            <div style={{textAlign: 'center'}}>
+                                <div style={{fontSize: '24px', fontWeight: 'bold', color: '#8AC926'}}>
+                                    {formatFCFA(profit)}
+                                </div>
+                                <div>Bénéfice</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Rendu de l'application
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
